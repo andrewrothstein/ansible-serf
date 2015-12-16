@@ -1,0 +1,29 @@
+---
+# tasks file for serf
+- name: download serf zip...
+  get_url: url='{{serf_url}}' dest='/tmp/{{serf_zip}}'
+
+- name: mkdir /opt/serf-XXX
+  file: >-
+    path=/opt/{{serf_name}}
+    owner=root
+    group=root
+    mode=0755
+    state=directory
+  
+- name: unarchive serf...
+  unarchive: copy=no src='/tmp/{{serf_zip}}' dest='/opt/{{serf_name}}'
+
+- name: link /opt/serf
+  file: >-
+    src=/opt/{{serf_name}}
+    dest=/opt/serf
+    state=link
+
+- name: add serf to the path...
+  copy: >-
+    src=etc/profile.d/serf.sh
+    dest=/etc/profile.d/serf.sh
+    owner=root
+    group=root
+    mode=0644

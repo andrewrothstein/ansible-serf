@@ -1,0 +1,5 @@
+---
+# vars file for serf
+serf_name : 'serf_{{serf_ver}}_{{serf_platform}}'
+serf_zip : '{{serf_name}}.zip'
+serf_url : '{{serf_mirror}}/{{serf_ver}}/{{serf_zip}}'
