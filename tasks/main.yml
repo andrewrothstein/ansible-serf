@@ -1,29 +1,58 @@
 ---
-# tasks file for serf
-- name: download serf zip...
-  get_url: url='{{serf_url}}' dest='/tmp/{{serf_zip}}'
-
-- name: mkdir /opt/serf-XXX
-  file: >-
-    path=/opt/{{serf_name}}
-    owner=root
-    group=root
-    mode=0755
-    state=directory
-  
-- name: unarchive serf...
-  unarchive: copy=no src='/tmp/{{serf_zip}}' dest='/opt/{{serf_name}}'
-
-- name: link /opt/serf
-  file: >-
-    src=/opt/{{serf_name}}
-    dest=/opt/serf
-    state=link
-
-- name: add serf to the path...
-  copy: >-
-    src=etc/profile.d/serf.sh
-    dest=/etc/profile.d/serf.sh
-    owner=root
-    group=root
-    mode=0644
+- name: resolve platform specific vars
+  include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+      skip: true
+      paths:
+        - '{{ role_path }}/vars'
+- name: look for serf install
+  become: yes
+  stat:
+    path: '{{ serf_install_dir }}'
+  changed_when: False
+  register: serf_binary
+- when: not serf_binary.stat.exists
+  block:
+    - name: download serf zip...
+      become: yes
+      become_user: root
+      get_url:
+        url: '{{ serf_url }}'
+        dest: '/tmp/{{ serf_zip }}'
+        checksum: '{{ serf_checksum }}'
+        mode: 0644
+    - name: mkdir
+      become: yes
+      become_user: root
+      file:
+        path: '{{ serf_install_dir }}'
+        state: directory
+        mode: 0755
+    - name: unarchive
+      become: yes
+      become_user: root
+      unarchive:
+        remote_src: yes
+        src: /tmp/{{ serf_zip }}
+        dest: '{{ serf_install_dir }}'
+        creates: '{{ serf_install_dir }}/serf'
+  always:
+    - name: cleanup
+      become: yes
+      become_user: root
+      file:
+        path: /tmp/{{ serf_zip }}
+        state: absent
+- name: link
+  become: yes
+  become_user: root
+  with_items:
+    - serf
+  file:
+    src: '{{ serf_install_dir }}/{{ item }}'
+    dest: '{{ serf_parent_install_dir }}/bin/{{ item }}'
+    state: link
