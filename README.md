@@ -1,6 +1,6 @@
 andrewrothstein.serf
 =========
-[![Build Status](https://travis-ci.org/andrewrothstein/ansible-serf.svg?branch=master)](https://travis-ci.org/andrewrothstein/ansible-serf)
+![Build Status](https://github.com/andrewrothstein/ansible-serf/actions/workflows/build.yml/badge.svg)
 
 Installs HashiCorp's [serf](https://www.serf.io/).
 
