@@ -9,50 +9,48 @@
       skip: true
       paths:
         - '{{ role_path }}/vars'
-- name: look for serf install
-  become: yes
+- name: looking for install in {{ serf_install_dir }}
+  become: true
   stat:
     path: '{{ serf_install_dir }}'
   changed_when: False
   register: serf_binary
 - when: not serf_binary.stat.exists
   block:
-    - name: download serf zip...
-      become: yes
+    - name: downloading {{ serf_url }}
+      become: true
       become_user: root
       get_url:
         url: '{{ serf_url }}'
-        dest: '/tmp/{{ serf_zip }}'
+        dest: '{{ serf_tmp_zip }}'
         checksum: '{{ serf_checksum }}'
         mode: 0644
-    - name: mkdir
-      become: yes
+    - name: mkdir {{ serf_install_dir }}
+      become: true
       become_user: root
       file:
         path: '{{ serf_install_dir }}'
         state: directory
         mode: 0755
-    - name: unarchive
-      become: yes
+    - name: unarchiving {{ serf_tmp_zip }}
+      become: true
       become_user: root
       unarchive:
-        remote_src: yes
-        src: /tmp/{{ serf_zip }}
+        remote_src: true
+        src: '{{ serf_tmp_zip }}'
         dest: '{{ serf_install_dir }}'
-        creates: '{{ serf_install_dir }}/serf'
+        creates: '{{ serf_exe }}'
   always:
-    - name: cleanup
-      become: yes
+    - name: rm {{ serf_tmp_zip }}
+      become: true
       become_user: root
       file:
-        path: /tmp/{{ serf_zip }}
+        path: '{{ serf_tmp_zip }}'
         state: absent
-- name: link
-  become: yes
+- name: linking {{ serf_link }} to {{ serf_exe }}
+  become: true
   become_user: root
-  with_items:
-    - serf
   file:
-    src: '{{ serf_install_dir }}/{{ item }}'
-    dest: '{{ serf_parent_install_dir }}/bin/{{ item }}'
+    src: '{{ serf_exe }}'
+    dest: '{{ serf_link }}'
     state: link
