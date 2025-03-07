@@ -1,56 +1,9 @@
 ---
-- name: resolve platform specific vars
-  include_vars: '{{ item }}'
-  with_first_found:
-    - files:
-        - '{{ ansible_distribution }}-{{ ansible_distribution_release }}.yml'
-        - '{{ ansible_distribution }}.yml'
-        - '{{ ansible_os_family }}.yml'
-      skip: true
-      paths:
-        - '{{ role_path }}/vars'
-- name: looking for install in {{ serf_install_dir }}
-  become: true
-  stat:
-    path: '{{ serf_install_dir }}'
-  changed_when: False
-  register: serf_binary
-- when: not serf_binary.stat.exists
-  block:
-    - name: downloading {{ serf_url }}
-      become: true
-      become_user: root
-      get_url:
-        url: '{{ serf_url }}'
-        dest: '{{ serf_tmp_zip }}'
-        checksum: '{{ serf_checksum }}'
-        mode: 0644
-    - name: mkdir {{ serf_install_dir }}
-      become: true
-      become_user: root
-      file:
-        path: '{{ serf_install_dir }}'
-        state: directory
-        mode: 0755
-    - name: unarchiving {{ serf_tmp_zip }}
-      become: true
-      become_user: root
-      unarchive:
-        remote_src: true
-        src: '{{ serf_tmp_zip }}'
-        dest: '{{ serf_install_dir }}'
-        creates: '{{ serf_exe }}'
-  always:
-    - name: rm {{ serf_tmp_zip }}
-      become: true
-      become_user: root
-      file:
-        path: '{{ serf_tmp_zip }}'
-        state: absent
-- name: linking {{ serf_link }} to {{ serf_exe }}
-  become: true
-  become_user: root
-  file:
-    src: '{{ serf_exe }}'
-    dest: '{{ serf_link }}'
-    state: link
+- name: Installing consul binaries
+  ansible.builtin.include_role:
+    name: andrewrothstein.hashi
+  vars:
+    hashi_apps:
+      - name: '{{ serf_app.name | default("serf") }}'
+        ver: '{{ serf_app.ver | default(serf_ver) }}'
+        meta: '{{ serf_app.meta | default("") }}'
